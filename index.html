@@ -510,6 +510,7 @@
         let currentLocation = 'all';
         let inventory = {};
         let recognition = null;
+        let isRecognizing = false;
 
         // 初期化
         function init() {
@@ -872,6 +873,7 @@
 
                 recognition.onerror = function(event) {
                     console.error('音声認識エラー:', event.error);
+                    isRecognizing = false;
                     let errorMessage = '音声認識エラーが発生しました。';
 
                     if (event.error === 'not-allowed' || event.error === 'permission-denied') {
@@ -888,6 +890,7 @@
 
                 recognition.onend = function() {
                     // 自動的に再開しないようにする
+                    isRecognizing = false;
                 };
             }
         }
@@ -899,22 +902,41 @@
                 return;
             }
 
+            // 既に実行中の場合は停止してから再開
+            if (isRecognizing) {
+                try {
+                    recognition.stop();
+                } catch (e) {
+                    console.error('停止エラー:', e);
+                }
+                // 少し待ってから再開
+                setTimeout(() => startVoiceInput(), 300);
+                return;
+            }
+
             try {
                 document.getElementById('voiceModal').classList.add('show');
                 document.getElementById('voiceResult').textContent = '';
+                isRecognizing = true;
                 recognition.start();
             } catch (error) {
                 console.error('音声認識開始エラー:', error);
-                alert('音声認識を開始できませんでした。\n既に実行中の可能性があります。');
+                isRecognizing = false;
+                alert('音声認識を開始できませんでした。\nページを再読み込みしてお試しください。');
                 closeModal('voiceModal');
             }
         }
 
         // 音声入力停止
         function stopVoiceInput() {
-            if (recognition) {
-                recognition.stop();
+            if (recognition && isRecognizing) {
+                try {
+                    recognition.stop();
+                } catch (error) {
+                    console.error('音声認識停止エラー:', error);
+                }
             }
+            isRecognizing = false;
             closeModal('voiceModal');
         }
 
