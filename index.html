@@ -944,13 +944,41 @@
         function processVoiceCommand(text) {
             console.log('音声入力:', text);
 
-            // パターン: "商品名 場所 数字" または "商品名 数字"
-            // 例: "トイレットペーパー 807 5個" "ティッシュ 3個追加"
+            // 全角数字を半角に変換
+            text = text.replace(/[０-９]/g, (s) => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
 
+            // 漢数字を数字に変換
+            const kanjiNumbers = {
+                '一': '1', '二': '2', '三': '3', '四': '4', '五': '5',
+                '六': '6', '七': '7', '八': '8', '九': '9', '十': '10',
+                'いち': '1', 'に': '2', 'さん': '3', 'よん': '4', 'ご': '5',
+                'ろく': '6', 'なな': '7', 'はち': '8', 'きゅう': '9', 'じゅう': '10'
+            };
+
+            // 場所名のバリエーション
+            const locationAliases = {
+                'はちまるなな': '807',
+                'はちゼロなな': '807',
+                '８０７': '807',
+                'そうこ': '倉庫',
+                'きっちん': 'キッチン',
+                'にちようざっか': '日用雑貨',
+                'よくしつせんざい': '浴室洗剤',
+                'よくしつ': '浴室洗剤'
+            };
+
+            // 場所名を正規化
+            for (const [alias, normalized] of Object.entries(locationAliases)) {
+                text = text.replace(new RegExp(alias, 'gi'), normalized);
+            }
+
+            // 不要な言葉を削除
+            text = text.replace(/(追加|足す|ください|お願いします|を|に|へ)/g, '');
+
+            // パターン: "商品名 場所 数字" または "商品名 数字"
             const patterns = [
                 /(.+?)\s*(807|倉庫|キッチン|日用雑貨|浴室洗剤)\s*(\d+)/,
-                /(.+?)\s*(\d+)\s*(個|コ)/,
-                /(.+?)\s*(\d+)/
+                /(.+?)\s*(\d+)\s*(個|こ|コ|ケ|ヶ)?/,
             ];
 
             for (const pattern of patterns) {
@@ -970,6 +998,9 @@
                         quantity = parseInt(match[2]);
                     }
 
+                    // 商品名から数字を削除
+                    productName = productName.replace(/\d+/g, '').trim();
+
                     if (productName && quantity > 0) {
                         if (!inventory[location]) inventory[location] = {};
                         inventory[location][productName] = (inventory[location][productName] || 0) + quantity;
@@ -983,6 +1014,9 @@
                     }
                 }
             }
+
+            // 認識できなかった場合
+            document.getElementById('voiceResult').textContent = `❌ 認識できませんでした\n「${text}」\n\n例：トイレットペーパー 807 5`;
         }
 
         // 画像アップロードモーダル表示
