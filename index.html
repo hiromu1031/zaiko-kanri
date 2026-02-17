@@ -638,10 +638,10 @@
 
             // タイトル
             const header = document.createElement('div');
-            header.style.cssText = 'text-align: center; padding: 20px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); color: white; border-radius: 15px; margin-bottom: 20px;';
+            header.style.cssText = 'text-align: center; padding: 6px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); color: white; border-radius: 8px; margin-bottom: 10px;';
             header.innerHTML = `
-                <h2 style="font-size: 24px; margin-bottom: 5px;">🛒 買い物リスト</h2>
-                <div style="font-size: 16px;">在庫切れの商品一覧</div>
+                <h2 style="font-size: 16px; margin-bottom: 2px;">🛒 買い物リスト</h2>
+                <div style="font-size: 12px;">在庫切れの商品一覧</div>
             `;
             container.appendChild(header);
 
@@ -657,13 +657,13 @@
                     hasOutOfStock = true;
 
                     const section = document.createElement('div');
-                    section.style.marginBottom = '30px';
+                    section.style.marginBottom = '15px';
 
                     const title = document.createElement('h2');
                     title.textContent = location;
-                    title.style.fontSize = '22px';
+                    title.style.fontSize = '16px';
                     title.style.fontWeight = 'bold';
-                    title.style.marginBottom = '15px';
+                    title.style.marginBottom = '8px';
                     title.style.color = '#ff6b6b';
                     section.appendChild(title);
 
