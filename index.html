@@ -26,14 +26,8 @@
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 20px;
-            text-align: center;
+            min-height: 50px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .header h1 {
-            font-size: 24px;
-            margin-bottom: 5px;
         }
 
         /* メインタブ */
@@ -103,21 +97,21 @@
         /* 商品カード */
         .product-card {
             background: white;
-            border-radius: 10px;
-            padding: 8px 12px;
-            margin-bottom: 6px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            padding: 5px 10px;
+            margin-bottom: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
         .product-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
 
         .product-name {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
             color: #333;
             flex: 1;
@@ -127,9 +121,9 @@
             background: #ff6b6b;
             color: white;
             border: none;
-            border-radius: 5px;
-            padding: 4px 10px;
-            font-size: 13px;
+            border-radius: 4px;
+            padding: 3px 8px;
+            font-size: 12px;
             cursor: pointer;
             transition: all 0.3s;
         }
@@ -143,19 +137,19 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         .quantity-btn {
-            width: 38px;
-            height: 38px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             border: none;
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
         }
 
         .quantity-btn.minus {
@@ -173,10 +167,10 @@
         }
 
         .quantity-display {
-            font-size: 22px;
+            font-size: 18px;
             font-weight: bold;
             color: #667eea;
-            min-width: 50px;
+            min-width: 40px;
             text-align: center;
         }
 
@@ -429,10 +423,8 @@
 </head>
 <body>
     <!-- ヘッダー -->
-    <div class="header">
-        <h1>在庫管理</h1>
-        <div>いつでも、どこでも、簡単に</div>
-        <button onclick="showSettingsModal()" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: 2px solid white; color: white; border-radius: 50%; width: 45px; height: 45px; font-size: 24px; cursor: pointer;">⚙️</button>
+    <div class="header" style="padding: 10px 20px; position: relative;">
+        <button onclick="showSettingsModal()" style="position: absolute; top: 10px; right: 20px; background: rgba(255,255,255,0.2); border: 2px solid white; color: white; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; cursor: pointer;">⚙️</button>
     </div>
 
     <!-- メインタブ -->
@@ -880,6 +872,22 @@
 
                 recognition.onerror = function(event) {
                     console.error('音声認識エラー:', event.error);
+                    let errorMessage = '音声認識エラーが発生しました。';
+
+                    if (event.error === 'not-allowed' || event.error === 'permission-denied') {
+                        errorMessage = 'マイクの許可が必要です。\nブラウザの設定でマイクを許可してください。';
+                    } else if (event.error === 'no-speech') {
+                        errorMessage = '音声が検出されませんでした。\nもう一度お試しください。';
+                    } else if (event.error === 'network') {
+                        errorMessage = 'ネットワークエラーです。\nインターネット接続を確認してください。';
+                    }
+
+                    alert(errorMessage);
+                    closeModal('voiceModal');
+                };
+
+                recognition.onend = function() {
+                    // 自動的に再開しないようにする
                 };
             }
         }
@@ -891,9 +899,15 @@
                 return;
             }
 
-            document.getElementById('voiceModal').classList.add('show');
-            document.getElementById('voiceResult').textContent = '';
-            recognition.start();
+            try {
+                document.getElementById('voiceModal').classList.add('show');
+                document.getElementById('voiceResult').textContent = '';
+                recognition.start();
+            } catch (error) {
+                console.error('音声認識開始エラー:', error);
+                alert('音声認識を開始できませんでした。\n既に実行中の可能性があります。');
+                closeModal('voiceModal');
+            }
         }
 
         // 音声入力停止
