@@ -800,11 +800,8 @@
             const currentQty = inventory[location][productName] || 0;
             const newQty = Math.max(0, currentQty + delta);
 
-            if (newQty === 0) {
-                delete inventory[location][productName];
-            } else {
-                inventory[location][productName] = newQty;
-            }
+            // 0個でも保存する（在庫切れとして表示するため）
+            inventory[location][productName] = newQty;
 
             saveInventory();
             renderContent();
