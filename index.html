@@ -432,11 +432,13 @@
     <div class="header">
         <h1>在庫管理</h1>
         <div>いつでも、どこでも、簡単に</div>
+        <button onclick="showSettingsModal()" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: 2px solid white; color: white; border-radius: 50%; width: 45px; height: 45px; font-size: 24px; cursor: pointer;">⚙️</button>
     </div>
 
     <!-- メインタブ -->
     <div class="main-tabs">
-        <button class="main-tab active" data-tab="807">🏠 807/倉庫</button>
+        <button class="main-tab active" data-tab="all">🛒 ALL</button>
+        <button class="main-tab" data-tab="807">🏠 807/倉庫</button>
         <button class="main-tab" data-tab="jikka">🏡 実家</button>
     </div>
 
@@ -512,8 +514,8 @@
 
     <script>
         // グローバル変数
-        let currentMainTab = '807';
-        let currentLocation = '807';
+        let currentMainTab = 'all';
+        let currentLocation = 'all';
         let inventory = {};
         let recognition = null;
 
@@ -541,7 +543,11 @@
                         currentLocation = document.querySelector('.sub-tab.active').dataset.location;
                     } else {
                         subTabs.classList.remove('show');
-                        currentLocation = '807';
+                        if (currentMainTab === 'all') {
+                            currentLocation = 'all';
+                        } else {
+                            currentLocation = '807';
+                        }
                     }
 
                     renderContent();
@@ -608,7 +614,10 @@
 
         // 現在の場所を取得
         function getCurrentLocation() {
-            if (currentMainTab === '807') {
+            if (currentMainTab === 'all') {
+                // ALLタブの場合は807をデフォルトに
+                return '807';
+            } else if (currentMainTab === '807') {
                 return currentLocation;
             } else {
                 return currentLocation;
@@ -619,12 +628,71 @@
         function renderContent() {
             const content = document.getElementById('content');
 
-            // 807/倉庫タブの場合、両方の場所を表示
-            if (currentMainTab === '807') {
+            if (currentMainTab === 'all') {
+                // ALLタブ：全場所の在庫切れ商品を表示
+                renderAllOutOfStock(content);
+            } else if (currentMainTab === '807') {
+                // 807/倉庫タブの場合、両方の場所を表示
                 renderTwoLocations(content);
             } else {
                 // 実家タブの場合、選択中のカテゴリのみ表示
                 renderSingleLocation(content, currentLocation);
+            }
+        }
+
+        // ALLタブ：全場所の在庫切れ商品を表示
+        function renderAllOutOfStock(container) {
+            container.innerHTML = '';
+
+            // タイトル
+            const header = document.createElement('div');
+            header.style.cssText = 'text-align: center; padding: 20px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); color: white; border-radius: 15px; margin-bottom: 20px;';
+            header.innerHTML = `
+                <h2 style="font-size: 24px; margin-bottom: 5px;">🛒 買い物リスト</h2>
+                <div style="font-size: 16px;">在庫切れの商品一覧</div>
+            `;
+            container.appendChild(header);
+
+            // 全場所から在庫切れ商品を収集
+            const allLocations = ['807', '倉庫', 'キッチン', '日用雑貨', '浴室洗剤'];
+            let hasOutOfStock = false;
+
+            allLocations.forEach(location => {
+                const products = inventory[location] || {};
+                const outOfStockProducts = Object.entries(products).filter(([name, qty]) => qty === 0);
+
+                if (outOfStockProducts.length > 0) {
+                    hasOutOfStock = true;
+
+                    const section = document.createElement('div');
+                    section.style.marginBottom = '30px';
+
+                    const title = document.createElement('h2');
+                    title.textContent = location;
+                    title.style.fontSize = '22px';
+                    title.style.fontWeight = 'bold';
+                    title.style.marginBottom = '15px';
+                    title.style.color = '#ff6b6b';
+                    section.appendChild(title);
+
+                    outOfStockProducts.forEach(([productName, quantity]) => {
+                        section.appendChild(createProductCard(productName, quantity, location));
+                    });
+
+                    container.appendChild(section);
+                }
+            });
+
+            // 在庫切れ商品がない場合
+            if (!hasOutOfStock) {
+                const empty = document.createElement('div');
+                empty.className = 'empty-state';
+                empty.innerHTML = `
+                    <div class="empty-state-icon">✅</div>
+                    <div class="empty-state-text" style="color: #66bb6a;">在庫切れの商品はありません</div>
+                    <div style="color: #999; font-size: 16px; margin-top: 10px;">すべての商品に在庫があります</div>
+                `;
+                container.appendChild(empty);
             }
         }
 
@@ -654,7 +722,14 @@
                     `;
                     section.appendChild(empty);
                 } else {
-                    for (const [productName, quantity] of Object.entries(products)) {
+                    // 在庫切れを上位に表示するためにソート
+                    const sortedProducts = Object.entries(products).sort((a, b) => {
+                        if (a[1] === 0 && b[1] !== 0) return -1;
+                        if (a[1] !== 0 && b[1] === 0) return 1;
+                        return 0;
+                    });
+
+                    for (const [productName, quantity] of sortedProducts) {
                         section.appendChild(createProductCard(productName, quantity, location));
                     }
                 }
@@ -677,7 +752,14 @@
                     </div>
                 `;
             } else {
-                for (const [productName, quantity] of Object.entries(products)) {
+                // 在庫切れを上位に表示するためにソート
+                const sortedProducts = Object.entries(products).sort((a, b) => {
+                    if (a[1] === 0 && b[1] !== 0) return -1;
+                    if (a[1] !== 0 && b[1] === 0) return 1;
+                    return 0;
+                });
+
+                for (const [productName, quantity] of sortedProducts) {
                     container.appendChild(createProductCard(productName, quantity, location));
                 }
             }
@@ -688,14 +770,22 @@
             const card = document.createElement('div');
             card.className = 'product-card';
 
+            // 在庫切れの場合は赤色で強調
+            const isOutOfStock = quantity === 0;
+            const cardStyle = isOutOfStock ? 'border-left: 5px solid #ff6b6b; background: #fff5f5;' : '';
+            const quantityStyle = isOutOfStock ? 'color: #ff6b6b;' : '';
+            const warningIcon = isOutOfStock ? '⚠️ ' : '';
+
+            card.style.cssText = cardStyle;
+
             card.innerHTML = `
                 <div class="product-header">
-                    <div class="product-name">${name}</div>
+                    <div class="product-name">${warningIcon}${name}</div>
                     <button class="product-delete" onclick="deleteProduct('${location}', '${name}')">削除</button>
                 </div>
                 <div class="product-controls">
                     <button class="quantity-btn minus" onclick="changeQuantity('${location}', '${name}', -1)">−</button>
-                    <div class="quantity-display">${quantity}</div>
+                    <div class="quantity-display" style="${quantityStyle}">${quantity}</div>
                     <button class="quantity-btn plus" onclick="changeQuantity('${location}', '${name}', 1)">＋</button>
                 </div>
             `;
