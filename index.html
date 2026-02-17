@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>在庫管理 - 義母様専用</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+            font-size: 18px;
+            background: #f5f5f5;
+            padding-bottom: 80px;
+        }
+
+        /* ヘッダー */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        /* メインタブ */
+        .main-tabs {
+            display: flex;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .main-tab {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            background: white;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .main-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        /* サブタブ（実家用） */
+        .sub-tabs {
+            display: none;
+            background: #f8f9fa;
+            padding: 10px;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .sub-tabs.show {
+            display: block;
+        }
+
+        .sub-tab {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 5px;
+            border-radius: 25px;
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .sub-tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        /* コンテンツエリア */
+        .content {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* 商品カード */
+        .product-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .product-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .product-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            flex: 1;
+        }
+
+        .product-delete {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .product-delete:active {
+            transform: scale(0.95);
+            background: #ee5a52;
+        }
+
+        .product-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .quantity-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .quantity-btn.minus {
+            background: #ffa726;
+            color: white;
+        }
+
+        .quantity-btn.plus {
+            background: #66bb6a;
+            color: white;
+        }
+
+        .quantity-btn:active {
+            transform: scale(0.9);
+        }
+
+        .quantity-display {
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        /* 空の状態 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .empty-state-text {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        /* フローティングボタンエリア */
+        .floating-buttons {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 15px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .floating-btn {
+            flex: 1;
+            max-width: 180px;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .btn-add {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-voice {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-image {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .floating-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* モーダル */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #555;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-cancel {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .modal-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 音声入力中の表示 */
+        .voice-recording {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .voice-animation {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            margin: 0 auto 20px;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .voice-text {
+            font-size: 20px;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .voice-result {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            margin-top: 20px;
+            min-height: 30px;
+        }
+
+        /* 画像アップロードエリア */
+        .image-upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .image-upload-area:hover {
+            background: #f8f9fa;
+        }
+
+        .upload-icon {
+            font-size: 64px;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            font-size: 18px;
+            color: #555;
+        }
+
+        #imageInput {
+            display: none;
+        }
+
+        .processing {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .preview-image {
+            max-width: 100%;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- ヘッダー -->
+    <div class="header">
+        <h1>在庫管理</h1>
+        <div>いつでも、どこでも、簡単に</div>
+    </div>
+
+    <!-- メインタブ -->
+    <div class="main-tabs">
+        <button class="main-tab active" data-tab="807">🏠 807/倉庫</button>
+        <button class="main-tab" data-tab="jikka">🏡 実家</button>
+    </div>
+
+    <!-- サブタブ（実家用） -->
+    <div class="sub-tabs" id="subTabs">
+        <button class="sub-tab active" data-location="キッチン">キッチン</button>
+        <button class="sub-tab" data-location="日用雑貨">日用雑貨</button>
+        <button class="sub-tab" data-location="浴室洗剤">浴室洗剤</button>
+    </div>
+
+    <!-- コンテンツエリア -->
+    <div class="content" id="content">
+        <!-- 商品リストがここに表示されます -->
+    </div>
+
+    <!-- フローティングボタン -->
+    <div class="floating-buttons">
+        <button class="floating-btn btn-add" onclick="showAddProductModal()">➕ 追加</button>
+        <button class="floating-btn btn-voice" onclick="startVoiceInput()">🎤 音声</button>
+        <button class="floating-btn btn-image" onclick="showImageUploadModal()">📷 画像</button>
+    </div>
+
+    <!-- 商品追加モーダル -->
+    <div class="modal" id="addProductModal">
+        <div class="modal-content">
+            <div class="modal-title">商品を追加</div>
+            <div class="form-group">
+                <label class="form-label">商品名</label>
+                <input type="text" class="form-input" id="productName" placeholder="例：トイレットペーパー">
+            </div>
+            <div class="form-group">
+                <label class="form-label">個数</label>
+                <input type="number" class="form-input" id="productQuantity" value="1" min="0">
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn btn-cancel" onclick="closeModal('addProductModal')">キャンセル</button>
+                <button class="modal-btn btn-submit" onclick="addProduct()">追加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 音声入力モーダル -->
+    <div class="modal" id="voiceModal">
+        <div class="modal-content">
+            <div class="modal-title">音声で入力</div>
+            <div class="voice-recording">
+                <div class="voice-animation"></div>
+                <div class="voice-text">話してください...</div>
+                <div class="voice-result" id="voiceResult"></div>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn btn-cancel" onclick="stopVoiceInput()">完了</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 画像アップロードモーダル -->
+    <div class="modal" id="imageModal">
+        <div class="modal-content">
+            <div class="modal-title">スクリーンショットを読み込む</div>
+            <div id="imageUploadContent">
+                <div class="image-upload-area" onclick="document.getElementById('imageInput').click()">
+                    <div class="upload-icon">📸</div>
+                    <div class="upload-text">タップして画像を選択</div>
+                </div>
+                <input type="file" id="imageInput" accept="image/*" onchange="processImage(this)">
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn btn-cancel" onclick="closeModal('imageModal')">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // グローバル変数
+        let currentMainTab = '807';
+        let currentLocation = '807';
+        let inventory = {};
+        let recognition = null;
+
+        // 初期化
+        function init() {
+            loadInventory();
+            setupEventListeners();
+            renderContent();
+            setupSpeechRecognition();
+        }
+
+        // イベントリスナー設定
+        function setupEventListeners() {
+            // メインタブ
+            document.querySelectorAll('.main-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    currentMainTab = this.dataset.tab;
+
+                    // サブタブの表示切り替え
+                    const subTabs = document.getElementById('subTabs');
+                    if (currentMainTab === 'jikka') {
+                        subTabs.classList.add('show');
+                        currentLocation = document.querySelector('.sub-tab.active').dataset.location;
+                    } else {
+                        subTabs.classList.remove('show');
+                        currentLocation = '807';
+                    }
+
+                    renderContent();
+                });
+            });
+
+            // サブタブ
+            document.querySelectorAll('.sub-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    currentLocation = this.dataset.location;
+                    renderContent();
+                });
+            });
+        }
+
+        // ローカルストレージから在庫データを読み込み
+        function loadInventory() {
+            const saved = localStorage.getItem('inventory');
+            if (saved) {
+                inventory = JSON.parse(saved);
+            } else {
+                // 初期データ構造
+                inventory = {
+                    '807': {},
+                    '倉庫': {},
+                    'キッチン': {},
+                    '日用雑貨': {},
+                    '浴室洗剤': {}
+                };
+            }
+        }
+
+        // ローカルストレージに保存
+        function saveInventory() {
+            localStorage.setItem('inventory', JSON.stringify(inventory));
+        }
+
+        // 現在の場所を取得
+        function getCurrentLocation() {
+            if (currentMainTab === '807') {
+                return currentLocation;
+            } else {
+                return currentLocation;
+            }
+        }
+
+        // コンテンツ表示
+        function renderContent() {
+            const content = document.getElementById('content');
+
+            // 807/倉庫タブの場合、両方の場所を表示
+            if (currentMainTab === '807') {
+                renderTwoLocations(content);
+            } else {
+                // 実家タブの場合、選択中のカテゴリのみ表示
+                renderSingleLocation(content, currentLocation);
+            }
+        }
+
+        // 2つの場所を表示（807と倉庫）
+        function renderTwoLocations(container) {
+            container.innerHTML = '';
+
+            ['807', '倉庫'].forEach(location => {
+                const section = document.createElement('div');
+                section.style.marginBottom = '30px';
+
+                const title = document.createElement('h2');
+                title.textContent = location;
+                title.style.fontSize = '22px';
+                title.style.fontWeight = 'bold';
+                title.style.marginBottom = '15px';
+                title.style.color = '#667eea';
+                section.appendChild(title);
+
+                const products = inventory[location] || {};
+                if (Object.keys(products).length === 0) {
+                    const empty = document.createElement('div');
+                    empty.className = 'empty-state';
+                    empty.innerHTML = `
+                        <div class="empty-state-icon">📦</div>
+                        <div class="empty-state-text">まだ商品がありません</div>
+                    `;
+                    section.appendChild(empty);
+                } else {
+                    for (const [productName, quantity] of Object.entries(products)) {
+                        section.appendChild(createProductCard(productName, quantity, location));
+                    }
+                }
+
+                container.appendChild(section);
+            });
+        }
+
+        // 1つの場所を表示
+        function renderSingleLocation(container, location) {
+            container.innerHTML = '';
+
+            const products = inventory[location] || {};
+            if (Object.keys(products).length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📦</div>
+                        <div class="empty-state-text">まだ商品がありません</div>
+                        <div style="color: #999; font-size: 16px;">下の「➕ 追加」ボタンから商品を追加できます</div>
+                    </div>
+                `;
+            } else {
+                for (const [productName, quantity] of Object.entries(products)) {
+                    container.appendChild(createProductCard(productName, quantity, location));
+                }
+            }
+        }
+
+        // 商品カード作成
+        function createProductCard(name, quantity, location) {
+            const card = document.createElement('div');
+            card.className = 'product-card';
+
+            card.innerHTML = `
+                <div class="product-header">
+                    <div class="product-name">${name}</div>
+                    <button class="product-delete" onclick="deleteProduct('${location}', '${name}')">削除</button>
+                </div>
+                <div class="product-controls">
+                    <button class="quantity-btn minus" onclick="changeQuantity('${location}', '${name}', -1)">−</button>
+                    <div class="quantity-display">${quantity}</div>
+                    <button class="quantity-btn plus" onclick="changeQuantity('${location}', '${name}', 1)">＋</button>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // 個数変更
+        function changeQuantity(location, productName, delta) {
+            if (!inventory[location]) inventory[location] = {};
+
+            const currentQty = inventory[location][productName] || 0;
+            const newQty = Math.max(0, currentQty + delta);
+
+            if (newQty === 0) {
+                delete inventory[location][productName];
+            } else {
+                inventory[location][productName] = newQty;
+            }
+
+            saveInventory();
+            renderContent();
+        }
+
+        // 商品削除
+        function deleteProduct(location, productName) {
+            if (confirm(`「${productName}」を削除しますか？`)) {
+                delete inventory[location][productName];
+                saveInventory();
+                renderContent();
+            }
+        }
+
+        // モーダル表示
+        function showAddProductModal() {
+            document.getElementById('addProductModal').classList.add('show');
+            document.getElementById('productName').value = '';
+            document.getElementById('productQuantity').value = '1';
+            setTimeout(() => document.getElementById('productName').focus(), 300);
+        }
+
+        // モーダルを閉じる
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+
+        // 商品追加
+        function addProduct() {
+            const name = document.getElementById('productName').value.trim();
+            const quantity = parseInt(document.getElementById('productQuantity').value) || 0;
+
+            if (!name) {
+                alert('商品名を入力してください');
+                return;
+            }
+
+            const location = getCurrentLocation();
+            if (!inventory[location]) inventory[location] = {};
+
+            inventory[location][name] = (inventory[location][name] || 0) + quantity;
+
+            saveInventory();
+            closeModal('addProductModal');
+            renderContent();
+        }
+
+        // 音声認識のセットアップ
+        function setupSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.lang = 'ja-JP';
+                recognition.continuous = true;
+                recognition.interimResults = true;
+
+                recognition.onresult = function(event) {
+                    let interimTranscript = '';
+                    let finalTranscript = '';
+
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const transcript = event.results[i][0].transcript;
+                        if (event.results[i].isFinal) {
+                            finalTranscript += transcript;
+                        } else {
+                            interimTranscript += transcript;
+                        }
+                    }
+
+                    document.getElementById('voiceResult').textContent = finalTranscript || interimTranscript;
+
+                    if (finalTranscript) {
+                        processVoiceCommand(finalTranscript);
+                    }
+                };
+
+                recognition.onerror = function(event) {
+                    console.error('音声認識エラー:', event.error);
+                };
+            }
+        }
+
+        // 音声入力開始
+        function startVoiceInput() {
+            if (!recognition) {
+                alert('お使いのブラウザは音声入力に対応していません。\nChromeまたはEdgeをお使いください。');
+                return;
+            }
+
+            document.getElementById('voiceModal').classList.add('show');
+            document.getElementById('voiceResult').textContent = '';
+            recognition.start();
+        }
+
+        // 音声入力停止
+        function stopVoiceInput() {
+            if (recognition) {
+                recognition.stop();
+            }
+            closeModal('voiceModal');
+        }
+
+        // 音声コマンド処理
+        function processVoiceCommand(text) {
+            console.log('音声入力:', text);
+
+            // パターン: "商品名 場所 数字" または "商品名 数字"
+            // 例: "トイレットペーパー 807 5個" "ティッシュ 3個追加"
+
+            const patterns = [
+                /(.+?)\s*(807|倉庫|キッチン|日用雑貨|浴室洗剤)\s*(\d+)/,
+                /(.+?)\s*(\d+)\s*(個|コ)/,
+                /(.+?)\s*(\d+)/
+            ];
+
+            for (const pattern of patterns) {
+                const match = text.match(pattern);
+                if (match) {
+                    let productName, location, quantity;
+
+                    if (match[2] && (match[2] === '807' || match[2] === '倉庫' || match[2] === 'キッチン' || match[2] === '日用雑貨' || match[2] === '浴室洗剤')) {
+                        // 場所指定あり
+                        productName = match[1].trim();
+                        location = match[2];
+                        quantity = parseInt(match[3]);
+                    } else {
+                        // 場所指定なし（現在の場所に追加）
+                        productName = match[1].trim();
+                        location = getCurrentLocation();
+                        quantity = parseInt(match[2]);
+                    }
+
+                    if (productName && quantity > 0) {
+                        if (!inventory[location]) inventory[location] = {};
+                        inventory[location][productName] = (inventory[location][productName] || 0) + quantity;
+                        saveInventory();
+                        renderContent();
+
+                        // フィードバック
+                        document.getElementById('voiceResult').textContent = `✓ ${productName} を ${location} に ${quantity}個 追加しました`;
+                        setTimeout(() => stopVoiceInput(), 2000);
+                        return;
+                    }
+                }
+            }
+        }
+
+        // 画像アップロードモーダル表示
+        function showImageUploadModal() {
+            document.getElementById('imageModal').classList.add('show');
+        }
+
+        // 画像処理
+        function processImage(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = document.getElementById('imageUploadContent');
+                content.innerHTML = `
+                    <img src="${e.target.result}" class="preview-image">
+                    <div class="processing">
+                        <div class="spinner"></div>
+                        <div style="font-size: 18px; color: #555;">画像を解析しています...</div>
+                    </div>
+                `;
+
+                // 画像をBase64に変換してClaude APIで解析する処理
+                // ※ この部分は実際にはバックエンドまたはClaude API統合が必要です
+                setTimeout(() => {
+                    alert('画像認識機能は現在、Claude APIキーの設定が必要です。\n\n手動で商品を追加する場合は「➕ 追加」ボタンをお使いください。');
+                    closeModal('imageModal');
+                }, 2000);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // ページ読み込み時に初期化
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
