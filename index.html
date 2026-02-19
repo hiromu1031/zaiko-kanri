@@ -299,6 +299,87 @@
             border-color: #667eea;
         }
 
+        /* カスタムドロップダウン */
+        .custom-select {
+            position: relative;
+            width: 100%;
+        }
+
+        .custom-select-trigger {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #333;
+            user-select: none;
+            -webkit-user-select: none;
+            transition: border-color 0.3s;
+        }
+
+        .custom-select-trigger.open {
+            border-color: #667eea;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .custom-select-arrow {
+            color: #667eea;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+
+        .custom-select-trigger.open .custom-select-arrow {
+            transform: rotate(180deg);
+        }
+
+        .custom-select-options {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #667eea;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            z-index: 2000;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+        }
+
+        .custom-select-options.open {
+            display: block;
+        }
+
+        .custom-select-option {
+            padding: 16px 15px;
+            font-size: 18px;
+            cursor: pointer;
+            color: #333;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.15s;
+        }
+
+        .custom-select-option:last-child {
+            border-bottom: none;
+        }
+
+        .custom-select-option:active {
+            background: #f0f2ff;
+        }
+
+        .custom-select-option.selected {
+            color: #667eea;
+            font-weight: bold;
+            background: #f8f0ff;
+        }
+
         .modal-buttons {
             display: flex;
             gap: 10px;
@@ -459,6 +540,23 @@
             <div class="form-group">
                 <label class="form-label">個数</label>
                 <input type="number" class="form-input" id="productQuantity" value="1" min="0">
+            </div>
+            <div class="form-group">
+                <label class="form-label">追加する場所</label>
+                <input type="hidden" id="productLocation" value="807">
+                <div class="custom-select" id="locationSelectWrapper">
+                    <div class="custom-select-trigger" id="locationTrigger" onclick="toggleLocationDropdown()">
+                        <span id="locationSelectText">807</span>
+                        <span class="custom-select-arrow">▼</span>
+                    </div>
+                    <div class="custom-select-options" id="locationOptions">
+                        <div class="custom-select-option selected" onclick="selectLocation('807')">807</div>
+                        <div class="custom-select-option" onclick="selectLocation('倉庫')">倉庫</div>
+                        <div class="custom-select-option" onclick="selectLocation('キッチン')">キッチン</div>
+                        <div class="custom-select-option" onclick="selectLocation('日用雑貨')">日用雑貨</div>
+                        <div class="custom-select-option" onclick="selectLocation('浴室洗剤')">浴室洗剤</div>
+                    </div>
+                </div>
             </div>
             <div class="modal-buttons">
                 <button class="modal-btn btn-cancel" onclick="closeModal('addProductModal')">キャンセル</button>
@@ -804,11 +902,33 @@
             }
         }
 
+        // カスタムドロップダウン：開閉
+        function toggleLocationDropdown() {
+            const trigger = document.getElementById('locationTrigger');
+            const options = document.getElementById('locationOptions');
+            trigger.classList.toggle('open');
+            options.classList.toggle('open');
+        }
+
+        // カスタムドロップダウン：選択
+        function selectLocation(value) {
+            document.getElementById('productLocation').value = value;
+            document.getElementById('locationSelectText').textContent = value;
+            document.getElementById('locationTrigger').classList.remove('open');
+            document.getElementById('locationOptions').classList.remove('open');
+            document.querySelectorAll('.custom-select-option').forEach(opt => {
+                opt.classList.toggle('selected', opt.textContent === value);
+            });
+        }
+
         // モーダル表示
         function showAddProductModal() {
             document.getElementById('addProductModal').classList.add('show');
             document.getElementById('productName').value = '';
             document.getElementById('productQuantity').value = '1';
+            // 現在のタブの場所をプルダウンに自動選択
+            const loc = getCurrentLocation();
+            selectLocation(loc);
             setTimeout(() => document.getElementById('productName').focus(), 300);
         }
 
@@ -827,7 +947,7 @@
                 return;
             }
 
-            const location = getCurrentLocation();
+            const location = document.getElementById('productLocation').value;
             if (!inventory[location]) inventory[location] = {};
 
             inventory[location][name] = (inventory[location][name] || 0) + quantity;
@@ -1044,6 +1164,15 @@
             };
             reader.readAsDataURL(file);
         }
+
+        // ドロップダウン外タップで閉じる
+        document.addEventListener('click', function(e) {
+            const wrapper = document.getElementById('locationSelectWrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+                document.getElementById('locationTrigger').classList.remove('open');
+                document.getElementById('locationOptions').classList.remove('open');
+            }
+        });
 
         // ページ読み込み時に初期化
         window.addEventListener('DOMContentLoaded', init);
