@@ -841,12 +841,7 @@
                     </div>
                 `;
             } else {
-                // 在庫切れを上位に表示するためにソート
-                const sortedProducts = Object.entries(products).sort((a, b) => {
-                    if (a[1] === 0 && b[1] !== 0) return -1;
-                    if (a[1] !== 0 && b[1] === 0) return 1;
-                    return 0;
-                });
+                const sortedProducts = sortProducts(products);
 
                 for (const [productName, quantity] of sortedProducts) {
                     container.appendChild(createProductCard(productName, quantity, location));
@@ -947,7 +942,9 @@
         function sortProducts(products) {
             const entries = Object.entries(products);
             if (currentSort === 'name') {
-                return entries.sort((a, b) => a[0].localeCompare(b[0], 'ja'));
+                return entries.sort((a, b) =>
+                    a[0].localeCompare(b[0], 'ja-JP', { sensitivity: 'base', ignorePunctuation: true })
+                );
             } else {
                 return entries.sort((a, b) => {
                     if (a[1] === 0 && b[1] !== 0) return -1;
