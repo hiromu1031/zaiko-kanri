@@ -299,85 +299,33 @@
             border-color: #667eea;
         }
 
-        /* カスタムドロップダウン */
-        .custom-select {
-            position: relative;
-            width: 100%;
-        }
-
-        .custom-select-trigger {
-            width: 100%;
-            padding: 15px;
-            font-size: 18px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            background: white;
-            cursor: pointer;
+        /* 場所選択ボタングループ */
+        .location-buttons {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: #333;
-            user-select: none;
-            -webkit-user-select: none;
-            transition: border-color 0.3s;
+            flex-wrap: wrap;
+            gap: 8px;
         }
 
-        .custom-select-trigger.open {
-            border-color: #667eea;
-            border-radius: 10px 10px 0 0;
-        }
-
-        .custom-select-arrow {
+        .location-btn {
+            padding: 12px 18px;
+            border-radius: 25px;
+            border: 2px solid #667eea;
+            background: white;
             color: #667eea;
             font-size: 16px;
             font-weight: bold;
-            transition: transform 0.2s;
-            flex-shrink: 0;
-        }
-
-        .custom-select-trigger.open .custom-select-arrow {
-            transform: rotate(180deg);
-        }
-
-        .custom-select-options {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 2px solid #667eea;
-            border-top: none;
-            border-radius: 0 0 10px 10px;
-            z-index: 2000;
-            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-        }
-
-        .custom-select-options.open {
-            display: block;
-        }
-
-        .custom-select-option {
-            padding: 16px 15px;
-            font-size: 18px;
             cursor: pointer;
-            color: #333;
-            border-bottom: 1px solid #f0f0f0;
-            transition: background 0.15s;
+            transition: all 0.2s;
         }
 
-        .custom-select-option:last-child {
-            border-bottom: none;
+        .location-btn.selected {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
         }
 
-        .custom-select-option:active {
-            background: #f0f2ff;
-        }
-
-        .custom-select-option.selected {
-            color: #667eea;
-            font-weight: bold;
-            background: #f8f0ff;
+        .location-btn:active {
+            transform: scale(0.95);
         }
 
         .modal-buttons {
@@ -544,18 +492,12 @@
             <div class="form-group">
                 <label class="form-label">追加する場所</label>
                 <input type="hidden" id="productLocation" value="807">
-                <div class="custom-select" id="locationSelectWrapper">
-                    <div class="custom-select-trigger" id="locationTrigger" onclick="toggleLocationDropdown()">
-                        <span id="locationSelectText">807</span>
-                        <span class="custom-select-arrow">▼</span>
-                    </div>
-                    <div class="custom-select-options" id="locationOptions">
-                        <div class="custom-select-option selected" onclick="selectLocation('807')">807</div>
-                        <div class="custom-select-option" onclick="selectLocation('倉庫')">倉庫</div>
-                        <div class="custom-select-option" onclick="selectLocation('キッチン')">キッチン</div>
-                        <div class="custom-select-option" onclick="selectLocation('日用雑貨')">日用雑貨</div>
-                        <div class="custom-select-option" onclick="selectLocation('浴室洗剤')">浴室洗剤</div>
-                    </div>
+                <div class="location-buttons">
+                    <button type="button" class="location-btn selected" onclick="selectLocation('807')">807</button>
+                    <button type="button" class="location-btn" onclick="selectLocation('倉庫')">倉庫</button>
+                    <button type="button" class="location-btn" onclick="selectLocation('キッチン')">キッチン</button>
+                    <button type="button" class="location-btn" onclick="selectLocation('日用雑貨')">日用雑貨</button>
+                    <button type="button" class="location-btn" onclick="selectLocation('浴室洗剤')">浴室洗剤</button>
                 </div>
             </div>
             <div class="modal-buttons">
@@ -902,22 +844,11 @@
             }
         }
 
-        // カスタムドロップダウン：開閉
-        function toggleLocationDropdown() {
-            const trigger = document.getElementById('locationTrigger');
-            const options = document.getElementById('locationOptions');
-            trigger.classList.toggle('open');
-            options.classList.toggle('open');
-        }
-
-        // カスタムドロップダウン：選択
+        // 場所ボタン選択
         function selectLocation(value) {
             document.getElementById('productLocation').value = value;
-            document.getElementById('locationSelectText').textContent = value;
-            document.getElementById('locationTrigger').classList.remove('open');
-            document.getElementById('locationOptions').classList.remove('open');
-            document.querySelectorAll('.custom-select-option').forEach(opt => {
-                opt.classList.toggle('selected', opt.textContent === value);
+            document.querySelectorAll('.location-btn').forEach(btn => {
+                btn.classList.toggle('selected', btn.textContent === value);
             });
         }
 
@@ -1164,15 +1095,6 @@
             };
             reader.readAsDataURL(file);
         }
-
-        // ドロップダウン外タップで閉じる
-        document.addEventListener('click', function(e) {
-            const wrapper = document.getElementById('locationSelectWrapper');
-            if (wrapper && !wrapper.contains(e.target)) {
-                document.getElementById('locationTrigger').classList.remove('open');
-                document.getElementById('locationOptions').classList.remove('open');
-            }
-        });
 
         // ページ読み込み時に初期化
         window.addEventListener('DOMContentLoaded', init);
