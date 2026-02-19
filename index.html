@@ -133,6 +133,23 @@
             background: #ee5a52;
         }
 
+        .product-edit {
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 3px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 4px;
+        }
+
+        .product-edit:active {
+            transform: scale(0.95);
+            background: #5a6fd6;
+        }
+
         .product-controls {
             display: flex;
             align-items: center;
@@ -507,6 +524,21 @@
         </div>
     </div>
 
+    <!-- 商品名編集モーダル -->
+    <div class="modal" id="editProductModal">
+        <div class="modal-content">
+            <div class="modal-title">商品名を編集</div>
+            <div class="form-group">
+                <label class="form-label">商品名</label>
+                <input type="text" class="form-input" id="editProductName">
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn btn-cancel" onclick="closeModal('editProductModal')">キャンセル</button>
+                <button class="modal-btn btn-submit" onclick="saveEditProduct()">保存</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 音声入力モーダル -->
     <div class="modal" id="voiceModal">
         <div class="modal-content">
@@ -809,6 +841,7 @@
             card.innerHTML = `
                 <div class="product-header">
                     <div class="product-name">${warningIcon}${name}</div>
+                    <button class="product-edit" onclick="showEditModal('${location}', '${name}')">編集</button>
                     <button class="product-delete" onclick="deleteProduct('${location}', '${name}')">削除</button>
                 </div>
                 <div class="product-controls">
@@ -832,6 +865,35 @@
             inventory[location][productName] = newQty;
 
             saveInventory();
+            renderContent();
+        }
+
+        // 商品名編集モーダル表示
+        let editTarget = { location: '', name: '' };
+
+        function showEditModal(location, name) {
+            editTarget = { location, name };
+            document.getElementById('editProductName').value = name;
+            document.getElementById('editProductModal').classList.add('show');
+            setTimeout(() => document.getElementById('editProductName').focus(), 300);
+        }
+
+        // 商品名保存
+        function saveEditProduct() {
+            const newName = document.getElementById('editProductName').value.trim();
+            if (!newName) {
+                alert('商品名を入力してください');
+                return;
+            }
+            if (newName === editTarget.name) {
+                closeModal('editProductModal');
+                return;
+            }
+            const qty = inventory[editTarget.location][editTarget.name];
+            delete inventory[editTarget.location][editTarget.name];
+            inventory[editTarget.location][newName] = qty;
+            saveInventory();
+            closeModal('editProductModal');
             renderContent();
         }
 
