@@ -87,6 +87,33 @@
             color: white;
         }
 
+        /* 並び替えバー */
+        .sort-bar {
+            display: flex;
+            gap: 8px;
+            padding: 8px 20px;
+            background: #f8f9fa;
+            justify-content: flex-end;
+        }
+
+        .sort-btn {
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 2px solid #aaa;
+            background: white;
+            color: #888;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sort-btn.active {
+            border-color: #667eea;
+            color: #667eea;
+            background: #f0f2ff;
+        }
+
         /* コンテンツエリア */
         .content {
             padding: 20px;
@@ -482,6 +509,12 @@
         <button class="sub-tab" data-location="浴室洗剤">浴室洗剤</button>
     </div>
 
+    <!-- 並び替えバー -->
+    <div class="sort-bar" id="sortBar">
+        <button class="sort-btn active" id="sortOutOfStock" onclick="setSort('outofstock')">⚠️ 在庫切れ優先</button>
+        <button class="sort-btn" id="sortName" onclick="setSort('name')">🔤 名前順</button>
+    </div>
+
     <!-- コンテンツエリア -->
     <div class="content" id="content">
         <!-- 商品リストがここに表示されます -->
@@ -575,6 +608,7 @@
         // グローバル変数
         let currentMainTab = 'all';
         let currentLocation = 'all';
+        let currentSort = 'outofstock';
         let inventory = {};
         let recognition = null;
         let isRecognizing = false;
@@ -782,12 +816,7 @@
                     `;
                     section.appendChild(empty);
                 } else {
-                    // 在庫切れを上位に表示するためにソート
-                    const sortedProducts = Object.entries(products).sort((a, b) => {
-                        if (a[1] === 0 && b[1] !== 0) return -1;
-                        if (a[1] !== 0 && b[1] === 0) return 1;
-                        return 0;
-                    });
+                    const sortedProducts = sortProducts(products);
 
                     for (const [productName, quantity] of sortedProducts) {
                         section.appendChild(createProductCard(productName, quantity, location));
@@ -903,6 +932,28 @@
                 delete inventory[location][productName];
                 saveInventory();
                 renderContent();
+            }
+        }
+
+        // 並び替え切り替え
+        function setSort(mode) {
+            currentSort = mode;
+            document.getElementById('sortOutOfStock').classList.toggle('active', mode === 'outofstock');
+            document.getElementById('sortName').classList.toggle('active', mode === 'name');
+            renderContent();
+        }
+
+        // 商品リストをソート
+        function sortProducts(products) {
+            const entries = Object.entries(products);
+            if (currentSort === 'name') {
+                return entries.sort((a, b) => a[0].localeCompare(b[0], 'ja'));
+            } else {
+                return entries.sort((a, b) => {
+                    if (a[1] === 0 && b[1] !== 0) return -1;
+                    if (a[1] !== 0 && b[1] === 0) return 1;
+                    return 0;
+                });
             }
         }
 
