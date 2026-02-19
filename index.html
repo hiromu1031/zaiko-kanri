@@ -723,14 +723,13 @@
             const content = document.getElementById('content');
 
             if (currentMainTab === 'all') {
-                // ALLタブ：全場所の在庫切れ商品を表示
                 renderAllOutOfStock(content);
             } else if (currentMainTab === '807') {
-                // 807/倉庫タブの場合、両方の場所を表示
                 renderTwoLocations(content);
-            } else {
-                // 実家タブの場合、選択中のカテゴリのみ表示
-                renderSingleLocation(content, currentLocation);
+            } else if (currentMainTab === 'jikka') {
+                // currentLocationが'all'になっていた場合のフォールバック
+                const loc = (currentLocation && currentLocation !== 'all') ? currentLocation : 'キッチン';
+                renderSingleLocation(content, loc);
             }
         }
 
@@ -942,9 +941,13 @@
         function sortProducts(products) {
             const entries = Object.entries(products);
             if (currentSort === 'name') {
-                return entries.sort((a, b) =>
-                    a[0].localeCompare(b[0], 'ja-JP', { sensitivity: 'base', ignorePunctuation: true })
-                );
+                return entries.sort((a, b) => {
+                    try {
+                        return a[0].localeCompare(b[0], 'ja');
+                    } catch(e) {
+                        return a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0;
+                    }
+                });
             } else {
                 return entries.sort((a, b) => {
                     if (a[1] === 0 && b[1] !== 0) return -1;
